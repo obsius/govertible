@@ -1,10 +1,7 @@
 package govertible
 
 import (
-	_ "../utility"
-
 	"errors"
-	_ "fmt"
 	"reflect"
 )
 
