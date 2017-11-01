@@ -1,0 +1,9 @@
+language: go
+go:
+  - 1.8
+env:
+  - "PATH=/home/travis/gopath/bin:$PATH"
+before_install:
+  go get -t ./...
+script:
+  - go test -v -covermode=count -coverprofile=coverage.out ./...

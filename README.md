@@ -1,8 +1,8 @@
 ## govertible
 
 [![godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/obsius/govertible)
-[![coverage status](https://coveralls.io/repos/notnil/chess/badge.svg?branch=master&service=github)](https://coveralls.io/github/obsius/govertible?branch=master)
-[![go report card](https://goreportcard.com/badge/notnil/chess)](https://goreportcard.com/report/obsius/govertible)
+[![coverage](https://coveralls.io/repos/github/obsius/govertible/badge.svg?branch=master)](https://coveralls.io/github/obsius/govertible?branch=master)
+[![go report](https://goreportcard.com/badge/obsius/govertible)](https://goreportcard.com/report/obsius/govertible)
 [![license](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/obsius/govertible/master/LICENSE)
 
 A lightweight package to convert similar structures to and from each other.
