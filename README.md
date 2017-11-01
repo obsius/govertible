@@ -46,8 +46,9 @@ type person struct {
 
 func main() {
 	person := person{
-		Name:  "ElCaptain",
+		Name:  "El Capitan",
 		Phone: []byte("123-456-7890"),
+		Age:   20,
 	}
 	employee := employee{}
 
@@ -58,7 +59,7 @@ func main() {
 }
 ```
 
-Advanced example converting one struct to another using an interface.
+Advanced example converting one struct to another using the convertTo interface.
 ```golang
 package main
 
@@ -68,15 +69,18 @@ import (
 )
 
 type employee struct {
-	Name  string
+	Name  *string
+	Alias string
 	Phone []byte
-	ID    uinct64
+	ID    uint64
 }
 type person struct {
 	Name  string
+	Alias string
 	Phone []byte
 	Age   int
 }
+
 func (this *person) ConvertTo(val interface{}) (bool, error) {
 	switch val.(type) {
 	case *employee:
@@ -91,7 +95,58 @@ func (this *person) ConvertTo(val interface{}) (bool, error) {
 
 func main() {
 	person := person{
-		Name:  "ElCaptain",
+		Name:  "El Capitan",
+		Alias: "The Chief",
+		Phone: []byte("123-456-7890"),
+		Age:   10,
+	}
+	employee := employee{}
+
+	// convert a person struct to an employee struct
+	govertible.Convert(&person, &employee)
+
+	fmt.Println(employee)
+}
+```
+
+Advanced example converting one struct to another using the convertFrom interface.
+```golang
+package main
+
+import (
+	"fmt"
+	"github.com/obsius/govertible"
+)
+
+type employee struct {
+	Name  *string
+	Alias string
+	Phone []byte
+	ID    uint64
+}
+type person struct {
+	Name  string
+	Alias string
+	Phone []byte
+	Age   int
+}
+
+func (this *employee) ConvertFrom(val interface{}) (bool, error) {
+	switch val.(type) {
+	case *person:
+		v := val.(*person)
+		govertible.ConvertFields(val, this)
+		this.ID = uint64(v.Age)
+		break
+	}
+
+	return false, nil
+}
+
+func main() {
+	person := person{
+		Name:  "El Capitan",
+		Alias: "The Chief",
 		Phone: []byte("123-456-7890"),
 		Age:   10,
 	}
