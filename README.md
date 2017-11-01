@@ -1,5 +1,10 @@
 ## govertible
 
+[![godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/obsius/govertible)
+[![coverage status](https://coveralls.io/repos/notnil/chess/badge.svg?branch=master&service=github)](https://coveralls.io/github/obsius/govertible?branch=master)
+[![go report card](https://goreportcard.com/badge/notnil/chess)](https://goreportcard.com/report/obsius/govertible)
+[![license](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/obsius/govertible/master/LICENSE)
+
 A lightweight package to convert similar structures to and from each other.
 
 govertible will convert matching fields names of identical types from a source to a destination struct.  `ConvertTo()` and `ConvertFrom()` are implementable and allow for custom conversions as shown in the examples below.
@@ -64,7 +69,7 @@ import (
 type employee struct {
 	Name  string
 	Phone []byte
-	ID    uint64
+	ID    uinct64
 }
 type person struct {
 	Name  string

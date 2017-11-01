@@ -11,18 +11,18 @@ var (
 	failedToConvert    = "Failed to convert"
 )
 
-// ConvertableTo interface for convertibles
+// ConvertableTo interface for convertibles.
 type ConvertableTo interface {
 	ConvertTo(interface{}) (bool, error)
 }
 
-// ConvertableFrom interface for convertibles
+// ConvertableFrom interface for convertibles.
 type ConvertableFrom interface {
 	ConvertFrom(interface{}) (bool, error)
 }
 
-// MustConvertFields copies all of the fields inside of the "from" interface into the "to" interface
-// panics if the operation fails
+// MustConvertFields copies all of the fields inside of the "from" interface into the "to" interface.
+// Panics if the operation fails.
 func MustConvertFields(from interface{}, to interface{}) {
 	err := ConvertFields(from, to)
 	if err != nil {
@@ -30,8 +30,8 @@ func MustConvertFields(from interface{}, to interface{}) {
 	}
 }
 
-// ConvertFields copies all of the fields inside of the "from" interface into the "to" interface
-// returns an error if the operation fails
+// ConvertFields copies all of the fields inside of the "from" interface into the "to" interface.
+// Returns an error if the operation fails.
 func ConvertFields(from interface{}, to interface{}) error {
 
 	if err := enforcePointer(to); err != nil {
@@ -98,8 +98,8 @@ func ConvertFields(from interface{}, to interface{}) error {
 	return nil
 }
 
-// MustConvert copies values within the "from" interface into the "to" interface
-// panics if the operation fails
+// MustConvert copies values within the "from" interface into the "to" interface.
+// Panics if the operation fails.
 func MustConvert(from interface{}, to interface{}) {
 	err := Convert(from, to)
 	if err != nil {
@@ -108,7 +108,7 @@ func MustConvert(from interface{}, to interface{}) {
 }
 
 // Convert copies values within the "from" interface into the "to" interface
-// returns an error if the operation fails
+// Returns an error if the operation fails.
 func Convert(from interface{}, to interface{}) error {
 
 	if err := enforcePointer(to); err != nil {
