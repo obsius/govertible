@@ -4,6 +4,7 @@
 [![coverage](https://coveralls.io/repos/github/obsius/govertible/badge.svg?branch=master)](https://coveralls.io/github/obsius/govertible?branch=master)
 [![go report](https://goreportcard.com/badge/obsius/govertible)](https://goreportcard.com/report/obsius/govertible)
 [![license](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/obsius/govertible/master/LICENSE)
+[![build](https://travis-ci.org/obsius/govertible.svg?branch=master)](https://travis-ci.org/obsius/govertible.svg?branch=master)
 
 A lightweight package to convert similar structures to and from each other.
 
