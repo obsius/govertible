@@ -106,5 +106,5 @@ func main() {
 
 ## Benchmarks
 operation|ns/op|# operations|total time
--|-|-
+-|-|-|-
 ConvertStruct|22,850|100k|2.5s

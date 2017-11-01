@@ -1,10 +1,13 @@
 language: go
+
 go:
-  - 1.8
+    - 1.8
 env:
-  - "PATH=/home/travis/gopath/bin:$PATH"
+    - "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
-  go get -t ./...
+    - go get -t ./...
+    - go get github.com/mattn/goveralls
+    - go get code.google.com/p/go.tools/cmd/cover
 script:
   - go test -v -covermode=count -coverprofile=coverage.out ./...
   - goveralls -coverprofile=coverage.out -service travis-ci
