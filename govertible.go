@@ -2,7 +2,13 @@ package govertible
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
+)
+
+var (
+	invalidToInterface = "Can't convert to non-addressable struct (pass a pointer)"
+	failedToConvert    = "Failed to convert"
 )
 
 // ConvertableTo interface for convertibles
@@ -15,103 +21,106 @@ type ConvertableFrom interface {
 	ConvertFrom(interface{}) (bool, error)
 }
 
+// MustConvertFields copies all of the fields inside of the "from" interface into the "to" interface
+// panics if the operation fails
+func MustConvertFields(from interface{}, to interface{}) {
+	err := ConvertFields(from, to)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ConvertFields copies all of the fields inside of the "from" interface into the "to" interface
+// returns an error if the operation fails
 func ConvertFields(from interface{}, to interface{}) error {
 
-	if reflect.ValueOf(from).Kind() != reflect.Ptr {
-		panic("Can't convert from non-addressable struct (pass a pointer)")
-		return errors.New("Can't convert from non-addressable struct (pass a pointer)")
+	if err := enforcePointer(to); err != nil {
+		return err
 	}
 
-	if reflect.ValueOf(to).Kind() != reflect.Ptr {
-		panic("Can't convert to non-addressable struct (pass a pointer)")
-		return errors.New("Can't convert to non-addressable struct (pass a pointer)")
-	}
+	fromVal := getVal(from)
+	toVal := getVal(to)
 
-	rFrom := reflect.ValueOf(from).Elem()
-	rTo := reflect.ValueOf(to).Elem()
+	for i := 0; i < fromVal.NumField(); i++ {
 
-	// deref all pointers
-	for rFrom.Kind() == reflect.Ptr {
-		rFrom = rFrom.Elem()
-	}
-	for rTo.Kind() == reflect.Ptr {
-		rTo = rTo.Elem()
-	}
+		fromFieldName := fromVal.Type().Field(i).Name
 
-	for i := 0; i < rFrom.NumField(); i++ {
-
-		fromFieldName := rFrom.Type().Field(i).Name
-
-		//	fmt.Printf("IN FIELD: %v\n", fromFieldName)
-
-		fromVal := rFrom.Field(i)
-		toVal := rTo.FieldByName(fromFieldName)
+		fromField := fromVal.Field(i)
+		toField := toVal.FieldByName(fromFieldName)
 
 		// ignore if fields don't map
-		if !toVal.IsValid() {
+		if !toField.IsValid() {
 			continue
 		}
 
-		// deref all pointers
-		fromElem := fromVal
-		toElem := toVal
-		for fromElem.Kind() == reflect.Ptr {
-			fromElem = fromElem.Elem()
-		}
-		for toElem.Kind() == reflect.Ptr {
-			toElem = toElem.Elem()
+		// ignore if either can't address or get interface
+		if !toField.CanAddr() || !toField.CanInterface() {
+			continue
 		}
 
-		//fmt.Printf("field: %v - %v - %v\n", fromFieldName, fromVal, toVal)
+		// deref pointers
+		fromVal := getReflectVal(fromField)
+		toVal := getReflectVal(toField)
 
-		fromInterface := fromVal.Addr().Interface()
-		toInterface := toVal.Addr().Interface()
-
-		//fmt.Printf("field: %v - %v - %v\n", fromFieldName, utility.MustMarshalJSON(fromInterface), utility.MustMarshalJSON(toInterface))
+		fromInterface := fromField.Interface()
+		toInterface := toField.Interface()
 
 		// don't convert if a ptr is nil
-		if fromElem.Kind() == reflect.Invalid {
+		if fromVal.Kind() == reflect.Invalid {
 			continue
 		}
 
 		// initialize empty pointers
-		if toElem.Kind() == reflect.Invalid {
-			toVal.Set(reflect.New(toVal.Type().Elem()))
-			toElem = toVal.Elem()
-			toInterface = toVal.Elem().Addr().Interface()
+		if toVal.Kind() == reflect.Invalid {
+			toField.Set(reflect.New(toField.Type().Elem()))
+			toVal = toField.Elem()
+			toInterface = toField.Elem().Addr().Interface()
 		}
 
-		// same kind, then just set the val, else check for kinds
-		if reflect.TypeOf(fromInterface) == reflect.TypeOf(toInterface) {
-			toVal.Set(fromVal)
+		// convert, or set, or attempt to manipulate pointers to work
+		if fromVal.Kind() == reflect.Struct && toVal.Kind() == reflect.Struct {
+			if err := Convert(fromInterface, toVal.Addr().Interface()); err != nil {
+				return err
+			}
+		} else if fromVal.Kind() == toVal.Kind() {
+			if reflect.TypeOf(fromInterface) == reflect.TypeOf(toInterface) {
+				toField.Set(fromField)
+			} else if fromField.Kind() == reflect.Ptr {
+				toField.Set(fromVal)
+			} else if toField.Kind() == reflect.Ptr {
+				toField.Set(fromField.Addr())
+			}
 		} else {
-			//	fmt.Printf("calling convert with  %v  %v\n", fromInterface, toInterface)
-			Convert(fromInterface, toInterface)
+			fmt.Println("ignoring")
 		}
 	}
 
 	return nil
 }
 
+// MustConvert copies values within the "from" interface into the "to" interface
+// panics if the operation fails
+func MustConvert(from interface{}, to interface{}) {
+	err := Convert(from, to)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Convert copies values within the "from" interface into the "to" interface
+// returns an error if the operation fails
 func Convert(from interface{}, to interface{}) error {
+
+	if err := enforcePointer(to); err != nil {
+		return err
+	}
 
 	var err error
 
-	if reflect.ValueOf(from).Kind() != reflect.Ptr {
-		panic("Can't convert from non-addressable struct (pass a pointer)")
-		return errors.New("Can't convert from non-addressable struct (pass a pointer)")
-	}
-
-	if reflect.ValueOf(to).Kind() != reflect.Ptr {
-		panic("Can't convert to non-addressable struct (pass a pointer)")
-		return errors.New("Can't convert to non-addressable struct (pass a pointer)")
-	}
-
-	//fromVal := reflect.ValueOf(from)
 	toVal := reflect.ValueOf(to)
 
-	fromElem := reflect.ValueOf(from).Elem()
-	toElem := reflect.ValueOf(to).Elem()
+	fromElem := getVal(from)
+	toElem := getVal(to)
 
 	// deref all pointers
 	for fromElem.Kind() == reflect.Ptr {
@@ -121,11 +130,11 @@ func Convert(from interface{}, to interface{}) error {
 		toElem = toElem.Elem()
 	}
 
-	fromInterface := fromElem.Addr().Interface()
+	fromInterface := fromElem.Interface()
 	toInterface := toElem.Addr().Interface()
 
 	converted := false
-	//fmt.Printf("IN CONVERT: TYPES: %v <----> %v\n", fromElem.Kind(), toElem.Kind())
+
 	// if from is a struct, then try and call it's ConvertTo()
 	if fromElem.Kind() == reflect.Struct {
 		toConverter, ok := fromInterface.(ConvertableTo)
@@ -148,54 +157,112 @@ func Convert(from interface{}, to interface{}) error {
 		}
 	}
 
+	// if both from and to are structs, then convert fields
 	if !converted && fromElem.Kind() == reflect.Struct && toElem.Kind() == reflect.Struct {
-		ConvertFields(from, to)
+		if err := ConvertFields(from, to); err != nil {
+			return err
+		}
+		converted = true
 	}
-
-	// TODO check for byte[]
-	/*
-		if !converted && fromElem.Kind() == reflect.Slice && toElem.Kind() == reflect.Struct {
-			fromType := getElemType(fromInterface)
-			if fromType == uint8() {
-
-			}
-		}*/
 
 	if !converted && fromElem.Kind() == reflect.Slice && toElem.Kind() == reflect.Slice {
-		//toVal.Set(reflect.New(toVal.Type().Elem()))
-		//toElem = toVal.Elem()
-		//toInterface = toVal.Elem().Addr().Interface()
-
-		//fmt.Println(reflect.New(getElemType(fromInterface)))
-
-		s := fromElem
-		for i := 0; i < s.Len(); i++ {
-			//	fmt.Println("======>")
-
-			newTo := reflect.New(getElemType(toInterface))
-
-			newToInterface := newTo.Interface()
-
-			thing := s.Index(i).Elem().Addr().Interface()
-
-			Convert(thing, newToInterface)
-
-			toVal.Elem().Set(reflect.Append(toElem, newTo))
+		if err := convertArray(fromElem, toVal); err != nil {
+			return err
 		}
-
+		converted = true
 	}
-	/*
-		fmt.Println("--------------------------")
-		fmt.Println("from")
-		fmt.Println(utility.MustMarshalJSON(from))
-		fmt.Println("to")
-		fmt.Println(utility.MustMarshalJSON(to))
-		fmt.Println("\n\n")
-	*/
+
+	if !converted {
+		return errors.New(failedToConvert)
+	}
+
 	return nil
 }
 
-func getElemType(a interface{}) reflect.Type {
+func convertArray(fromVal reflect.Value, toVal reflect.Value) error {
+
+	if !toVal.IsValid() {
+		return nil
+	}
+
+	toValRef := toVal.Elem()
+
+	if !toValRef.CanSet() {
+		return nil
+	}
+
+	fromInterface := fromVal.Interface()
+	toInterface := toValRef.Addr().Interface()
+
+	fromKind := getType(fromInterface).Kind()
+	toKind := getType(toInterface).Kind()
+
+	if toKind == reflect.Array {
+		fmt.Println("array")
+	} else if toKind == reflect.Struct {
+		for i := 0; i < fromVal.Len(); i++ {
+
+			newToVal := reflect.New(getType(toInterface))
+			newToInterface := newToVal.Interface()
+
+			var fromInterface interface{}
+			if fromVal.Index(i).Type().Kind() == reflect.Ptr {
+				fromInterface = fromVal.Index(i).Interface()
+			} else {
+				fromInterface = fromVal.Index(i).Addr().Interface()
+			}
+
+			Convert(fromInterface, newToInterface)
+
+			if getSliceType(toInterface).Kind() == reflect.Ptr {
+				toVal.Elem().Set(reflect.Append(toVal.Elem(), newToVal))
+			} else {
+				toVal.Elem().Set(reflect.Append(toVal.Elem(), newToVal.Elem()))
+			}
+		}
+	} else if toKind == fromKind {
+		for i := 0; i < fromVal.Len(); i++ {
+			fromInterface := fromVal.Index(i).Interface()
+			toVal.Elem().Set(reflect.Append(toValRef, reflect.ValueOf(fromInterface)))
+		}
+	}
+
+	return nil
+}
+
+func enforcePointer(to interface{}) error {
+	if reflect.ValueOf(to).Kind() != reflect.Ptr {
+		return errors.New(invalidToInterface)
+	}
+	return nil
+}
+
+func getVal(val interface{}) reflect.Value {
+	if reflect.TypeOf(val).Kind() == reflect.Ptr {
+		return reflect.ValueOf(val).Elem()
+	}
+	return reflect.ValueOf(val)
+}
+
+func getReflectVal(val reflect.Value) reflect.Value {
+	if val.Kind() == reflect.Ptr {
+		return val.Elem()
+	}
+	return val
+}
+
+func getSliceType(a interface{}) reflect.Type {
+	for t := reflect.TypeOf(a).Elem(); ; {
+		switch t.Kind() {
+		case reflect.Slice:
+			t = t.Elem()
+		default:
+			return t
+		}
+	}
+}
+
+func getType(a interface{}) reflect.Type {
 	for t := reflect.TypeOf(a); ; {
 		switch t.Kind() {
 		case reflect.Ptr, reflect.Slice:

@@ -17,7 +17,7 @@ type ConvertibleTo interface {
 	ConvertTo(interface{}) (bool, error)
 }
 ```
-## examples
+## Examples
 Simple example converting one struct to another by field names without implementing an interface.
 ```golang
 package main
@@ -98,6 +98,7 @@ func main() {
 }
 ```
 
-## benchmarks
-operation|ns/op|total time
+## Benchmarks
+operation|ns/op|# operations|total time
 -|-|-
+ConvertStruct|22,850|100k|2.5s
