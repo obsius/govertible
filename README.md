@@ -1,6 +1,6 @@
 # govertible
 
-![logo](https://github.com/obsiius/govertible/logo.png)
+![govertible](logo.png "govertible")
 
 [![godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/obsius/govertible)
 [![coverage](https://coveralls.io/repos/github/obsius/govertible/badge.svg?branch=master)](https://coveralls.io/github/obsius/govertible?branch=master)
